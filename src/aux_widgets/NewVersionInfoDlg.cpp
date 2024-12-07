@@ -2,6 +2,8 @@
 #include "ui_NewVersionInfoDlg.h"
 
 #include <GitQlientSettings.h>
+#include <QScrollArea>
+#include <QLabel>
 
 NewVersionInfoDlg::NewVersionInfoDlg(QWidget *parent)
    : QDialog(parent)
@@ -119,7 +121,12 @@ void NewVersionInfoDlg::goNextPage()
 
 void NewVersionInfoDlg::createAddPage(const QString &title, const QStringList &imgsSrc, const QString &desc)
 {
+   QScrollArea *scrollArea = new QScrollArea();
+   scrollArea->setWidgetResizable(true);
+   scrollArea->setFrameShape(QFrame::NoFrame);
+
    const auto page = new QWidget();
+   scrollArea->setWidget(page);
    const auto titleLabel = new QLabel(title);
    auto font = titleLabel->font();
    font.setPointSize(14);
@@ -128,12 +135,14 @@ void NewVersionInfoDlg::createAddPage(const QString &title, const QStringList &i
    titleLabel->setAlignment(Qt::AlignCenter);
 
    const auto gridLayout = new QVBoxLayout(page);
-   gridLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+   gridLayout->setAlignment(Qt::AlignTop);
+   gridLayout->addSpacing(30);
    gridLayout->addWidget(titleLabel);
 
    for (const auto &imgSrc : imgsSrc)
    {
       const auto img = new QLabel();
+      img->setAlignment(Qt::AlignCenter);
       img->setPixmap(QPixmap(QString(":/images/NewVersionInfoDlg/%1").arg(imgSrc)));
       gridLayout->addWidget(img);
    }
@@ -143,7 +152,7 @@ void NewVersionInfoDlg::createAddPage(const QString &title, const QStringList &i
    description->setTextFormat(Qt::RichText);
    gridLayout->addWidget(description);
 
-   ui->stackedWidget->addWidget(page);
+   ui->stackedWidget->addWidget(scrollArea);
 }
 
 void NewVersionInfoDlg::saveConfig()

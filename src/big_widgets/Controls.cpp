@@ -36,8 +36,6 @@ Controls::Controls(const QSharedPointer<GitCache> &cache, const QSharedPointer<G
    , mPushBtn(new QToolButton(this))
    , mRefreshBtn(new QToolButton(this))
    , mConfigBtn(new QToolButton(this))
-   , mGitPlatform(new QToolButton(this))
-   , mBuildSystem(new QToolButton(this))
    , mPomodoro(new PomodoroButton(mGit, this))
    , mVersionCheck(new QToolButton(this))
    , mMergeWarning(
@@ -167,33 +165,6 @@ Controls::Controls(const QSharedPointer<GitCache> &cache, const QSharedPointer<G
    hLayout->addWidget(mRefreshBtn);
    hLayout->addWidget(mConfigBtn);
 
-   mGitPlatform->setVisible(false);
-   mBuildSystem->setVisible(false);
-
-   mPluginsSeparator = new QFrame(this);
-   mPluginsSeparator->setObjectName("orangeSeparator");
-   mPluginsSeparator->setFixedHeight(20);
-   mPluginsSeparator->setVisible(mBuildSystem->isVisible() || mGitPlatform->isVisible());
-   hLayout->addWidget(mPluginsSeparator);
-
-   createGitPlatformButton(hLayout);
-
-   mBuildSystem->setCheckable(true);
-   mBuildSystem->setIcon(QIcon(":/icons/build_system"));
-   mBuildSystem->setIconSize(QSize(22, 22));
-   mBuildSystem->setToolTip("Jenkins");
-   mBuildSystem->setToolButtonStyle(Qt::ToolButtonIconOnly);
-   mBuildSystem->setPopupMode(QToolButton::InstantPopup);
-   mBuildSystem->setShortcut(Qt::CTRL | Qt::Key_9);
-   mBtnGroup->addButton(mBuildSystem, static_cast<int>(ControlsMainViews::BuildSystem));
-
-   hLayout->addWidget(mBuildSystem);
-
-   configBuildSystemButton();
-
-   mBuildSystem->setEnabled(settings.localValue("BuildSystemEnabled", false).toBool());
-   mGitPlatform->setEnabled(settings.localValue("GitServerEnabled", false).toBool());
-
    mLastSeparator->setObjectName("orangeSeparator");
    mLastSeparator->setFixedHeight(20);
    mLastSeparator->setVisible(mPomodoro->isVisible() || mVersionCheck->isVisible());
@@ -222,7 +193,6 @@ Controls::Controls(const QSharedPointer<GitCache> &cache, const QSharedPointer<G
    connect(mMergeWarning, &QPushButton::clicked, this, &Controls::signalGoMerge);
    connect(mVersionCheck, &QToolButton::clicked, mUpdater, &GitQlientUpdater::showInfoMessage);
    connect(mConfigBtn, &QToolButton::clicked, this, &Controls::goConfig);
-   connect(mBuildSystem, &QToolButton::clicked, this, &Controls::signalGoBuildSystem);
 
    enableButtons(false);
 }
@@ -246,16 +216,6 @@ void Controls::enableButtons(bool enabled)
    mPushBtn->setEnabled(enabled);
    mRefreshBtn->setEnabled(enabled);
    mConfigBtn->setEnabled(enabled);
-
-   if (enabled)
-   {
-      GitQlientSettings settings(mGit->getGitDir());
-
-      mBuildSystem->setEnabled(settings.localValue("BuildSystemEnabled", false).toBool());
-      mGitPlatform->setEnabled(settings.localValue("GitServerEnabled", false).toBool());
-   }
-   else
-      mBuildSystem->setEnabled(false);
 }
 
 void Controls::pullCurrentBranch()
@@ -339,28 +299,6 @@ void Controls::changePomodoroVisibility()
    mPomodoro->setVisible(isVisible.toBool());
 }
 
-void Controls::showJenkinsButton(bool show)
-{
-   mBuildSystem->setVisible(show);
-   mPluginsSeparator->setVisible(show || mGitPlatform->isVisible());
-}
-
-void Controls::enableJenkins(bool enable)
-{
-   mBuildSystem->setEnabled(enable);
-}
-
-void Controls::showGitServerButton(bool show)
-{
-   mGitPlatform->setVisible(show);
-   mPluginsSeparator->setVisible(mBuildSystem->isVisible() || show);
-}
-
-void Controls::enableGitServer(bool enabled)
-{
-   mGitPlatform->setEnabled(enabled);
-}
-
 void Controls::pushCurrentBranch()
 {
    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -418,59 +356,6 @@ void Controls::pruneBranches()
 
    if (!ret.success)
       emit requestReferencesReload();
-}
-
-void Controls::createGitPlatformButton(QHBoxLayout *layout)
-{
-   QScopedPointer<GitConfig> gitConfig(new GitConfig(mGit));
-   const auto remoteUrl = gitConfig->getServerHost();
-   QIcon gitPlatformIcon;
-   QString name;
-   QString prName;
-   auto add = false;
-
-   if (remoteUrl.contains("github", Qt::CaseInsensitive))
-   {
-      add = true;
-
-      gitPlatformIcon = QIcon(":/icons/github");
-      name = "GitHub";
-      prName = tr("Pull Request");
-   }
-   else if (remoteUrl.contains("gitlab", Qt::CaseInsensitive))
-   {
-      add = true;
-
-      gitPlatformIcon = QIcon(":/icons/gitlab");
-      name = "GitLab";
-      prName = tr("Merge Request");
-   }
-
-   if (add)
-   {
-      mGitPlatform->setCheckable(true);
-      mGitPlatform->setIcon(gitPlatformIcon);
-      mGitPlatform->setIconSize(QSize(22, 22));
-      mGitPlatform->setToolTip(name);
-      mGitPlatform->setToolButtonStyle(Qt::ToolButtonIconOnly);
-      mGitPlatform->setPopupMode(QToolButton::InstantPopup);
-      mGitPlatform->setShortcut(Qt::CTRL | Qt::Key_8);
-      mBtnGroup->addButton(mGitPlatform, static_cast<int>(ControlsMainViews::GitServer));
-
-      layout->addWidget(mGitPlatform);
-
-      connect(mGitPlatform, &QToolButton::clicked, this, &Controls::signalGoServer);
-   }
-}
-
-void Controls::configBuildSystemButton()
-{
-   GitQlientSettings settings(mGit->getGitDir());
-   const auto isConfigured = settings.localValue("BuildSystemEnabled", false).toBool();
-   mBuildSystem->setEnabled(isConfigured);
-
-   if (!isConfigured)
-      emit signalGoRepo();
 }
 
 bool Controls::eventFilter(QObject *obj, QEvent *event)

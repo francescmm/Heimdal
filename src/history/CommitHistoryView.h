@@ -93,11 +93,6 @@ signals:
     * \brief signalPullConflict Signal triggered when trying to pull and a conflict happens.
     */
    void signalPullConflict();
-   /**
-    * @brief showPrDetailedView Signal that makes the view change to the Pull Request detailed view
-    * @param pr The pull request number to show.
-    */
-   void showPrDetailedView(int pr);
 
 public:
    /**

@@ -10,8 +10,6 @@
 #include <GitLocal.h>
 #include <GitQlientSettings.h>
 #include <GitQlientStyles.h>
-#include <GitServerTypes.h>
-#include <IGitServerCache.h>
 #include <Lane.h>
 #include <LaneType.h>
 
@@ -19,23 +17,19 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QEvent>
+#include <QFontDatabase>
 #include <QHeaderView>
 #include <QPainter>
 #include <QPainterPath>
 #include <QSortFilterProxyModel>
 #include <QToolTip>
 #include <QUrl>
-#include <QFontDatabase>
-
-using namespace GitServerPlugin;
 
 RepositoryViewDelegate::RepositoryViewDelegate(const QSharedPointer<GitCache> &cache,
                                                const QSharedPointer<GitBase> &git,
-                                               const QSharedPointer<IGitServerCache> &gitServerCache,
                                                CommitHistoryView *view)
    : mCache(cache)
    , mGit(git)
-   , mGitServerCache(gitServerCache)
    , mView(view)
 {
 }
@@ -490,15 +484,6 @@ void RepositoryViewDelegate::paintLog(QPainter *p, const QStyleOptionViewItem &o
 
    auto offset = 5;
 
-   if (mGitServerCache)
-   {
-      if (const auto pr = mGitServerCache->getPullRequest(commit.sha); pr.isValid())
-      {
-         offset += 5;
-         paintPrStatus(p, opt, offset, pr);
-      }
-   }
-
    paintTagBranch(p, opt, currentLangeColor, offset, commit);
 
    auto newOpt = opt;
@@ -573,8 +558,8 @@ void RepositoryViewDelegate::paintTagBranch(QPainter *painter, QStyleOptionViewI
       auto tmpBuffer = 0;
       for (auto &iter : refs)
       {
-          finalText += QString("%1 ").arg(iter.name);
-          tmpBuffer += 20;
+         finalText += QString("%1 ").arg(iter.name);
+         tmpBuffer += 20;
       }
 
       finalText.append(commit.shortLog);
@@ -582,7 +567,7 @@ void RepositoryViewDelegate::paintTagBranch(QPainter *painter, QStyleOptionViewI
       QString nameToDisplay;
 
       if (auto textWidth = fm.boundingRect(finalText).width(); textWidth + tmpBuffer >= o.rect.width() && GitQlientSettings().globalValue("HistoryView/PreferCommit", true).toBool())
-          nameToDisplay = QString("...");
+         nameToDisplay = QString("...");
 
       for (auto &iter : refs)
       {
@@ -631,33 +616,4 @@ void RepositoryViewDelegate::paintTagBranch(QPainter *painter, QStyleOptionViewI
          startPoint += rectWidth + mark_spacing;
       }
    }
-}
-
-void RepositoryViewDelegate::paintPrStatus(QPainter *painter, QStyleOptionViewItem opt, int &startPoint,
-                                           const PullRequest &pr) const
-{
-   QColor c;
-
-   switch (pr.state.eState)
-   {
-      case PullRequest::HeadState::State::Failure:
-         c = GitQlientStyles::getRed();
-         break;
-      case PullRequest::HeadState::State::Success:
-         c = GitQlientStyles::getGreen();
-         break;
-      default:
-      case PullRequest::HeadState::State::Pending:
-         c = GitQlientStyles::getOrange();
-         break;
-   }
-
-   painter->save();
-   painter->setRenderHint(QPainter::Antialiasing);
-   painter->setPen(c);
-   painter->setBrush(c);
-   painter->drawEllipse(opt.rect.x() + startPoint, opt.rect.y() + (opt.rect.height() / 2) - 5, 10, 10);
-   painter->restore();
-
-   startPoint += 10 + 5;
 }

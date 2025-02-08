@@ -1,7 +1,0 @@
-#pragma once
-
-#if defined(GITSERVERPLUGIN_LIBRARY)
-#   define GITSERVERPLUGIN_EXPORT Q_DECL_EXPORT
-#else
-#   define GITSERVERPLUGIN_EXPORT Q_DECL_IMPORT
-#endif

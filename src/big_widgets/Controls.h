@@ -45,8 +45,6 @@ enum class ControlsMainViews
    Diff,
    Blame,
    Merge,
-   GitServer,
-   BuildSystem,
    Config
 };
 
@@ -81,15 +79,6 @@ signals:
    */
    void signalGoMerge();
 
-   /**
-    * @brief signalGoManagement Signal triggered when the user selected the Git remote platform view.
-    */
-   void signalGoServer();
-
-   /**
-    * @brief signalGoBuildSystem Signal triggered when the user selected the Build System view.
-    */
-   void signalGoBuildSystem();
    /*!
     * \brief Signal triggered when trying to pull and a conflict happens.
     */
@@ -145,8 +134,6 @@ public:
    void setCurrentSha(const QString &sha) { mCurrentSha = sha; }
    /*!
     \brief Set all the buttons as enabled.
-
-    \param enabled True to enable, false otherwise.
    */
    void enableButtons(bool enabled);
    /*!
@@ -186,14 +173,6 @@ public:
     */
    void changePomodoroVisibility();
 
-   void showJenkinsButton(bool show);
-
-   void enableJenkins(bool enable);
-
-   void showGitServerButton(bool show);
-
-   void enableGitServer(bool enabled);
-
 private:
    QString mCurrentSha;
    QSharedPointer<GitCache> mCache;
@@ -206,16 +185,12 @@ private:
    QToolButton *mPushBtn = nullptr;
    QToolButton *mRefreshBtn = nullptr;
    QToolButton *mConfigBtn = nullptr;
-   QToolButton *mGitPlatform = nullptr;
-   QToolButton *mBuildSystem = nullptr;
    PomodoroButton *mPomodoro = nullptr;
    QToolButton *mVersionCheck = nullptr;
    QPushButton *mMergeWarning = nullptr;
    GitQlientUpdater *mUpdater = nullptr;
    QButtonGroup *mBtnGroup = nullptr;
    QFrame *mLastSeparator = nullptr;
-   QFrame *mPluginsSeparator = nullptr;
-   bool mGoGitServerView = false;
 
    /*!
     \brief Pulls the current branch.
@@ -232,16 +207,6 @@ private:
 
    */
    void pruneBranches();
-
-   /**
-    * @brief createGitPlatformButton Createst the git platform button if the user has enabled it.
-    */
-   void createGitPlatformButton(QHBoxLayout *layout);
-
-   /**
-    * @brief createBuildSystemButton Creates the build system platform button if the user has enabled it.
-    */
-   void configBuildSystemButton();
 
    bool eventFilter(QObject *obj, QEvent *event);
 };

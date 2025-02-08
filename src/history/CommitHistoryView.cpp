@@ -213,7 +213,6 @@ void CommitHistoryView::showContextMenu(const QPoint &pos)
          connect(menu, &CommitHistoryContextMenu::signalCherryPickConflict, this,
                  &CommitHistoryView::signalCherryPickConflict);
          connect(menu, &CommitHistoryContextMenu::signalPullConflict, this, &CommitHistoryView::signalPullConflict);
-         connect(menu, &CommitHistoryContextMenu::showPrDetailedView, this, &CommitHistoryView::showPrDetailedView);
          menu->exec(viewport()->mapToGlobal(pos));
       }
       else

@@ -25,9 +25,6 @@ class ConfigWidget : public QWidget
 signals:
    void reloadView();
    void reloadDiffFont();
-   void buildSystemEnabled(bool enabled);
-   void gitServerEnabled(bool enabled);
-   void terminalEnabled(bool enabled);
    void commitTitleMaxLenghtChanged();
    void panelsVisibilityChanged();
    void pomodoroVisibilityChanged();
@@ -40,7 +37,6 @@ public:
    ~ConfigWidget();
 
    void onPanelsVisibilityChanged();
-   void loadPlugins(QMap<QString, QObject *> plugins);
 
 private:
    Ui::ConfigWidget *ui;

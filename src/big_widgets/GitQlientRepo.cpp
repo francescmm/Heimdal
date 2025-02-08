@@ -4,7 +4,6 @@
 #include <BranchesWidget.h>
 #include <CommitHistoryColumns.h>
 #include <CommitInfo.h>
-#include <ConfigData.h>
 #include <ConfigWidget.h>
 #include <Controls.h>
 #include <DiffWidget.h>
@@ -18,14 +17,10 @@
 #include <GitQlientSettings.h>
 #include <GitQlientStyles.h>
 #include <GitRepoLoader.h>
-#include <GitServerTypes.h>
 #include <GitSubmodules.h>
 #include <GitTags.h>
 #include <GitWip.h>
 #include <HistoryWidget.h>
-#include <IGitServerCache.h>
-#include <IGitServerWidget.h>
-#include <IJenkinsWidget.h>
 #include <MergeWidget.h>
 #include <QLogger.h>
 #include <WaitingDlg.h>
@@ -41,7 +36,6 @@
 #include <QTimer>
 
 using namespace QLogger;
-using namespace GitServerPlugin;
 
 GitQlientRepo::GitQlientRepo(const QSharedPointer<GitBase> &git, const QSharedPointer<GitQlientSettings> &settings,
                              QWidget *parent)
@@ -112,8 +106,6 @@ GitQlientRepo::GitQlientRepo(const QSharedPointer<GitBase> &git, const QSharedPo
    connect(mControls, &Controls::signalGoBlame, this, &GitQlientRepo::showBlameView);
    connect(mControls, &Controls::signalGoDiff, this, &GitQlientRepo::showDiffView);
    connect(mControls, &Controls::signalGoMerge, this, &GitQlientRepo::showMergeView);
-   connect(mControls, &Controls::signalGoServer, this, &GitQlientRepo::showGitServerView);
-   connect(mControls, &Controls::signalGoBuildSystem, this, &GitQlientRepo::showBuildSystemView);
    connect(mControls, &Controls::goConfig, this, &GitQlientRepo::showConfig);
    connect(mControls, &Controls::signalPullConflict, mControls, &Controls::activateMergeWarning);
    connect(mControls, &Controls::signalPullConflict, this, &GitQlientRepo::showWarningMerge);
@@ -139,7 +131,6 @@ GitQlientRepo::GitQlientRepo(const QSharedPointer<GitBase> &git, const QSharedPo
    connect(mHistoryWidget, &HistoryWidget::signalPullConflict, mControls, &Controls::activateMergeWarning);
    connect(mHistoryWidget, &HistoryWidget::signalPullConflict, this, &GitQlientRepo::showWarningMerge);
    connect(mHistoryWidget, &HistoryWidget::signalUpdateWip, this, &GitQlientRepo::updateWip);
-   connect(mHistoryWidget, &HistoryWidget::showPrDetailedView, this, &GitQlientRepo::showGitServerPrView);
 
    connect(mDiffWidget, &DiffWidget::signalShowFileHistory, this, &GitQlientRepo::showFileHistory);
    connect(mDiffWidget, &DiffWidget::signalDiffEmpty, mControls, &Controls::disableDiff);
@@ -160,8 +151,6 @@ GitQlientRepo::GitQlientRepo(const QSharedPointer<GitBase> &git, const QSharedPo
    connect(mConfigWidget, &ConfigWidget::moveLogsAndClose, this, &GitQlientRepo::moveLogsAndClose);
    connect(mConfigWidget, &ConfigWidget::autoFetchChanged, this, &GitQlientRepo::reconfigureAutoFetch);
    connect(mConfigWidget, &ConfigWidget::autoRefreshChanged, this, &GitQlientRepo::reconfigureAutoFetch);
-   connect(mConfigWidget, &ConfigWidget::buildSystemEnabled, this, &GitQlientRepo::buildSystemActivationToggled);
-   connect(mConfigWidget, &ConfigWidget::gitServerEnabled, this, &GitQlientRepo::gitServerActivationToggled);
 
    connect(mGitLoader.data(), &GitRepoLoader::signalLoadingStarted, this, &GitQlientRepo::createProgressDialog);
    connect(mGitLoader.data(), &GitRepoLoader::signalLoadingFinished, this, &GitQlientRepo::onRepoLoadFinished);
@@ -215,44 +204,6 @@ void GitQlientRepo::openCommitDiff(const QString currentSha)
       mControls->enableDiff();
 
       showDiffView();
-   }
-}
-
-void GitQlientRepo::setPlugins(QMap<QString, QObject *> plugins)
-{
-   mConfigWidget->loadPlugins(plugins);
-
-   if (plugins.isEmpty())
-      return;
-
-   for (auto iter = plugins.constBegin(); iter != plugins.constEnd(); ++iter)
-   {
-      if (iter.key().split("-").constFirst().contains("jenkins", Qt::CaseInsensitive)
-          && qobject_cast<QWidget *>(iter.value()))
-      {
-         mJenkins = qobject_cast<IJenkinsWidget *>(iter.value());
-         mJenkins->setContentsMargins(QMargins(5, 5, 5, 5));
-         connect(mJenkins, &IJenkinsWidget::gotoBranch, this, &GitQlientRepo::focusHistoryOnBranch);
-         connect(mJenkins, &IJenkinsWidget::gotoPullRequest, this, &GitQlientRepo::focusHistoryOnPr);
-
-         if (mJenkins->isConfigured())
-            mJenkins->update();
-
-         mControls->showJenkinsButton(true);
-         mIndexMap[ControlsMainViews::BuildSystem] = mStackedLayout->addWidget(mJenkins);
-      }
-      else if (iter.key().split("-").constFirst().contains("gitserver", Qt::CaseInsensitive)
-               && qobject_cast<QWidget *>(iter.value()))
-      {
-
-         mGitServerWidget = qobject_cast<IGitServerWidget *>(iter.value());
-         mGitServerWidget->setContentsMargins(QMargins(5, 5, 5, 5));
-
-         mControls->showGitServerButton(true);
-         mIndexMap[ControlsMainViews::GitServer] = mStackedLayout->addWidget(mGitServerWidget);
-      }
-      else
-         mPlugins[iter.key()] = iter.value();
    }
 }
 
@@ -467,99 +418,6 @@ void GitQlientRepo::showMergeView()
    mControls->toggleButton(ControlsMainViews::Merge);
 }
 
-bool GitQlientRepo::configureGitServer() const
-{
-   bool isConfigured = false;
-
-   if (mSettings->localValue("GitServerEnabled", false).toBool())
-   {
-      const auto remoteBranches = mGitQlientCache->getBranches(References::Type::RemoteBranches);
-
-      if (!mGitServerWidget->isConfigured())
-      {
-         QScopedPointer<GitConfig> gitConfig(new GitConfig(mGitBase));
-         const auto serverUrl = gitConfig->getServerHost();
-         const auto repoInfo = gitConfig->getCurrentRepoAndOwner();
-
-         GitQlientSettings settings("");
-         const auto user = settings.globalValue(QString("%1/user").arg(serverUrl)).toString();
-         const auto token = settings.globalValue(QString("%1/token").arg(serverUrl)).toString();
-         const auto endPoint = settings.globalValue(QString("%1/endpoint").arg(serverUrl)).toString();
-
-         GitServerPlugin::ConfigData data;
-         data.user = user;
-         data.token = token;
-         data.serverUrl = serverUrl;
-         data.repoOwner = repoInfo.first;
-         data.repoName = repoInfo.second;
-         data.endPoint = endPoint;
-
-         isConfigured = mGitServerWidget->configure(data, remoteBranches, GitQlientStyles::getStyles());
-      }
-      else
-         isConfigured = true;
-
-      if (isConfigured)
-         mGitServerWidget->start(remoteBranches);
-   }
-
-   return isConfigured;
-}
-
-void GitQlientRepo::showGitServerView()
-{
-   if (configureGitServer())
-   {
-      mGitServerCache = mGitServerWidget->getCache();
-      mHistoryWidget->enableGitServerFeatures(mGitServerCache);
-
-      mStackedLayout->setCurrentIndex(mIndexMap[ControlsMainViews::GitServer]);
-      mControls->toggleButton(ControlsMainViews::GitServer);
-   }
-   else
-      showPreviousView();
-}
-
-void GitQlientRepo::showGitServerPrView(int prNumber)
-{
-   if (configureGitServer())
-   {
-      showGitServerView();
-      mGitServerWidget->openPullRequest(prNumber);
-   }
-}
-
-void GitQlientRepo::showBuildSystemView()
-{
-   if (mSettings->localValue("BuildSystemEnabled", false).toBool())
-   {
-      if (mJenkins->isConfigured())
-         mJenkins->update();
-      else
-      {
-         mJenkins->configure({ mSettings->localValue("BuildSystemUser", "").toString(),
-                               mSettings->localValue("BuildSystemToken", "").toString(),
-                               mSettings->localValue("BuildSystemUrl", "").toString() },
-                             GitQlientStyles::getStyles());
-         mJenkins->start();
-      }
-
-      mStackedLayout->setCurrentIndex(mIndexMap[ControlsMainViews::BuildSystem]);
-   }
-
-   mControls->toggleButton(ControlsMainViews::BuildSystem);
-}
-
-void GitQlientRepo::buildSystemActivationToggled(bool enabled)
-{
-   mControls->enableJenkins(enabled);
-}
-
-void GitQlientRepo::gitServerActivationToggled(bool enabled)
-{
-   mControls->enableGitServer(enabled);
-}
-
 void GitQlientRepo::showConfig()
 {
    mStackedLayout->setCurrentIndex(mIndexMap[ControlsMainViews::Config]);
@@ -604,14 +462,6 @@ void GitQlientRepo::focusHistoryOnBranch(const QString &branch)
       QMessageBox::information(
           this, tr("Branch not found"),
           tr("The branch couldn't be found. Please, make sure you fetched and have the latest changes."));
-}
-
-void GitQlientRepo::focusHistoryOnPr(int prNumber)
-{
-   const auto pr = mGitServerCache->getPullRequest(prNumber);
-
-   mHistoryWidget->focusOnCommit(pr.state.sha);
-   showHistoryView();
 }
 
 void GitQlientRepo::reconfigureAutoFetch(int newInterval)

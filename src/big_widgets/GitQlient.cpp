@@ -28,9 +28,6 @@
 #include <QTextStream>
 #include <QToolButton>
 
-#include <IGitServerWidget.h>
-#include <IJenkinsWidget.h>
-
 #include <QLogger.h>
 
 using namespace QLogger;
@@ -47,8 +44,6 @@ GitQlient::GitQlient(QWidget *parent)
    QLog_Info("UI", "*          GitQlient has started          *");
    QLog_Info("UI", QString("*                  %1                  *").arg(VER));
    QLog_Info("UI", "*******************************************");
-
-   loadPlugins();
 
    setStyleSheet(GitQlientStyles::getStyles());
 
@@ -385,20 +380,6 @@ void GitQlient::addNewRepoTab(const QString &repoPathArg, bool pinned)
 
          repo->loadRepo();
 
-         if (!mPlugins.isEmpty() || (mPlugins.empty() && mJenkins.second) || (mPlugins.empty() && mGitServer.second))
-         {
-            decltype(mPlugins) plugins;
-            plugins = mPlugins;
-
-            if (mJenkins.second)
-               plugins[mJenkins.first] = mJenkins.second->createWidget();
-
-            if (mGitServer.second)
-               plugins[mGitServer.first] = mGitServer.second->createWidget(git);
-
-            repo->setPlugins(plugins);
-         }
-
          mCurrentRepos.insert(repoPath);
 
          QProcess p;
@@ -519,66 +500,6 @@ void GitQlient::moveLogsBeforeClose()
    mMoveLogs = true;
 
    close();
-}
-
-void GitQlient::loadPlugins()
-{
-   QDir pluginsDir(QSettings().value("PluginsFolder").toString());
-#if defined(Q_OS_WIN)
-   if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
-      pluginsDir.cdUp();
-#elif defined(Q_OS_MAC)
-   if (pluginsDir.dirName() == "MacOS")
-   {
-      pluginsDir.cdUp();
-      pluginsDir.cdUp();
-      pluginsDir.cdUp();
-   }
-#endif
-
-   const auto entries = pluginsDir.entryList(QDir::Files);
-
-   for (const auto &fileName : entries)
-   {
-      QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
-      if (const auto plugin = pluginLoader.instance())
-      {
-         const auto metadata = pluginLoader.metaData();
-         const auto name = metadata.value("MetaData").toObject().value("Name").toString();
-         const auto version = metadata.value("MetaData").toObject().value("Version").toString();
-         const auto newKey = QString("%1-%2").arg(name, version);
-
-         if (name.contains("jenkins", Qt::CaseInsensitive)
-             && (!mJenkins.second || mJenkins.first.split("-").constLast() < version))
-         {
-            mJenkins = qMakePair(newKey, qobject_cast<IJenkinsWidget *>(plugin));
-         }
-         else if (name.contains("gitserver", Qt::CaseInsensitive)
-                  && (!mGitServer.second || mGitServer.first.split("-").constLast() < version))
-         {
-            bool loaded = true;
-
-            QLibrary webChannel("libQt5WebChannel");
-            loaded &= webChannel.load();
-
-            if (!loaded)
-               QLog_Error("UI", QString("Impossible to load QtWebChannel: %1").arg(webChannel.errorString()));
-
-            QLibrary webEngineWidgets("libQt5WebEngineWidgets");
-            loaded &= webEngineWidgets.load();
-
-            if (loaded)
-               mGitServer = qMakePair(newKey, qobject_cast<IGitServerWidget *>(plugin));
-            else
-               QLog_Error("UI", "It was impossible to load the GitServerPlugin since there are dependencies missing.");
-         }
-      }
-      else
-      {
-         const auto errorStr = pluginLoader.errorString();
-         QLog_Error("UI", QString("%1").arg(errorStr));
-      }
-   }
 }
 
 void GitQlient::closeRepoIfNotPinned()

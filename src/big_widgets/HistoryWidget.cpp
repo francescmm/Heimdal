@@ -158,12 +158,11 @@ HistoryWidget::HistoryWidget(const QSharedPointer<GitCache> &cache, const QShare
    connect(mRepositoryView, &CommitHistoryView::signalCherryPickConflict, this,
            &HistoryWidget::signalCherryPickConflict);
    connect(mRepositoryView, &CommitHistoryView::signalPullConflict, this, &HistoryWidget::signalPullConflict);
-   connect(mRepositoryView, &CommitHistoryView::showPrDetailedView, this, &HistoryWidget::showPrDetailedView);
 
    mRepositoryView->setObjectName("historyGraphView");
    mRepositoryView->setModel(mRepositoryModel);
    mRepositoryView->setItemDelegate(mItemDelegate
-                                    = new RepositoryViewDelegate(mCache, mGit, mGitServerCache, mRepositoryView));
+                                    = new RepositoryViewDelegate(mCache, mGit, mRepositoryView));
    mRepositoryView->setEnabled(true);
 
    mBranchesWidget = new BranchesWidget(mCache, mGit, this);
@@ -268,16 +267,6 @@ HistoryWidget::~HistoryWidget()
 
    delete mItemDelegate;
    delete mRepositoryModel;
-}
-
-void HistoryWidget::enableGitServerFeatures(const QSharedPointer<IGitServerCache> &gitServerCache)
-{
-   mGitServerCache = gitServerCache;
-
-   delete mItemDelegate;
-
-   mRepositoryView->setItemDelegate(mItemDelegate
-                                    = new RepositoryViewDelegate(mCache, mGit, mGitServerCache, mRepositoryView));
 }
 
 void HistoryWidget::clear()

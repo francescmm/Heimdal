@@ -91,11 +91,6 @@ signals:
     * @brief signalRefreshPRsCache Signal that refreshes PRs cache.
     */
    void signalRefreshPRsCache();
-   /**
-    * @brief showPrDetailedView Signal that makes the view change to the Pull Request detailed view
-    * @param pr The pull request number to show.
-    */
-   void showPrDetailedView(int pr);
 
 public:
    /*!

@@ -39,19 +39,10 @@ class HistoryWidget;
 class DiffWidget;
 class BlameWidget;
 class MergeWidget;
-class IGitServerWidget;
 class QTimer;
 class WaitingDlg;
-class IGitServerCache;
 class GitTags;
 class ConfigWidget;
-
-class IJenkinsWidget;
-
-namespace GitServer
-{
-class IRestApi;
-}
 
 enum class ControlsMainViews;
 
@@ -136,12 +127,6 @@ public:
    QString currentBranch() const;
 
    /**
-    * @brief Sets the plugins loaded by GitQlient to be used by the repo instance.
-    * @param plugins The list of plugins.
-    */
-   void setPlugins(QMap<QString, QObject *> plugins);
-
-   /**
     * @brief getGitQlientCache Retrieves the GitQlient internal cache object.
     * @return Shared pointer to the internal cache.
     */
@@ -158,7 +143,6 @@ protected:
 private:
    QString mCurrentDir;
    QSharedPointer<GitCache> mGitQlientCache;
-   QSharedPointer<IGitServerCache> mGitServerCache;
    QSharedPointer<GitBase> mGitBase;
    QSharedPointer<GitQlientSettings> mSettings;
    QSharedPointer<GitRepoLoader> mGitLoader;
@@ -168,17 +152,13 @@ private:
    DiffWidget *mDiffWidget = nullptr;
    BlameWidget *mBlameWidget = nullptr;
    MergeWidget *mMergeWidget = nullptr;
-   IGitServerWidget *mGitServerWidget = nullptr;
-   IJenkinsWidget *mJenkins = nullptr;
    ConfigWidget *mConfigWidget = nullptr;
-   QMap<QString, QObject *> mPlugins;
    QTimer *mAutoFetch = nullptr;
    QTimer *mAutoFilesUpdate = nullptr;
    QTimer *mAutoPrUpdater = nullptr;
    QPointer<WaitingDlg> mWaitDlg;
    int mPreviousView;
    QMap<ControlsMainViews, int> mIndexMap;
-   QSharedPointer<GitServer::IRestApi> mApi;
 
    bool mIsInit = false;
    QThread *m_loaderThread;
@@ -276,29 +256,6 @@ private:
    */
    void showMergeView();
 
-   bool configureGitServer() const;
-
-   /**
-    * @brief showGitServerView Shows the configured git server view.
-    */
-   void showGitServerView();
-
-   /**
-    * @brief showGitServerPrView Shows the configured git server view opening the details of the pull request identified
-    * by the given @p prNumber.
-    * @param prNumber The pull request number to show the details.
-    */
-   void showGitServerPrView(int prNumber);
-
-   /**
-    * @brief showBuildSystemView Shows the build system view.
-    */
-   void showBuildSystemView();
-
-   void buildSystemActivationToggled(bool enabled);
-
-   void gitServerActivationToggled(bool enabled);
-
    void showConfig();
 
    /*!
@@ -331,10 +288,4 @@ private slots:
     * @param branch The branch.
     */
    void focusHistoryOnBranch(const QString &branch);
-
-   /**
-    * @brief focusHistoryOnPr Opens the graph view and focuses on the SHA of the PR number.
-    * @param prNumber The PR to put the focus on.
-    */
-   void focusHistoryOnPr(int prNumber);
 };

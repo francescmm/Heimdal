@@ -34,8 +34,6 @@ class GitConfig;
 class QStackedLayout;
 class GitQlientSettings;
 class GitBase;
-class IJenkinsWidget;
-class IGitServerWidget;
 
 /*!
  \brief The GitQlient class is the MainWindow of the GitQlient application. Is the widget that stores all the tabs about
@@ -104,9 +102,6 @@ private:
    ProgressDlg *mProgressDlg = nullptr;
    QString mPathToOpen;
    bool mMoveLogs = false;
-   QMap<QString, QObject *> mPlugins;
-   QPair<QString, IJenkinsWidget *> mJenkins;
-   QPair<QString, IGitServerWidget *> mGitServer;
 
    /*!
     \brief Opens a QFileDialog to select a repository in the local disk.
@@ -192,8 +187,6 @@ private:
     * @brief moveLogsBeforeClose Marks the logs to be moved to their new folder before GitQlient closes.
     */
    void moveLogsBeforeClose();
-
-   void loadPlugins();
 
    void closeRepoIfNotPinned();
 };

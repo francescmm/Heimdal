@@ -39,7 +39,7 @@ BlameWidget::BlameWidget(const QSharedPointer<GitCache> &cache, const QSharedPoi
    mRepoView->header()->setSectionHidden(static_cast<int>(CommitHistoryColumns::Graph), true);
    mRepoView->header()->setSectionHidden(static_cast<int>(CommitHistoryColumns::Date), true);
    mRepoView->header()->setSectionHidden(static_cast<int>(CommitHistoryColumns::Author), true);
-   mRepoView->setItemDelegate(mItemDelegate = new RepositoryViewDelegate(cache, mGit, nullptr, mRepoView));
+   mRepoView->setItemDelegate(mItemDelegate = new RepositoryViewDelegate(cache, mGit, mRepoView));
    mRepoView->setEnabled(true);
    mRepoView->setMaximumWidth(450);
    mRepoView->setSelectionBehavior(QAbstractItemView::SelectRows);

@@ -31,12 +31,6 @@ class GitCache;
 class GitBase;
 class Lane;
 class CommitInfo;
-class IGitServerCache;
-
-namespace GitServerPlugin
-{
-struct PullRequest;
-}
 
 const int ROW_HEIGHT = 25;
 const int LANE_WIDTH = 3 * ROW_HEIGHT / 4;
@@ -60,8 +54,7 @@ public:
     * @param git The git object to execute git commands.
     * @param view The view that uses the delegate.
     */
-   RepositoryViewDelegate(const QSharedPointer<GitCache> &cache, const QSharedPointer<GitBase> &git,
-                          const QSharedPointer<IGitServerCache> &gitServerCache, CommitHistoryView *view);
+   RepositoryViewDelegate(const QSharedPointer<GitCache> &cache, const QSharedPointer<GitBase> &git, CommitHistoryView *view);
 
    /**
     * @brief Overridden method to paint the different columns and rows in the view.
@@ -85,7 +78,6 @@ protected:
 private:
    QSharedPointer<GitCache> mCache;
    QSharedPointer<GitBase> mGit;
-   QSharedPointer<IGitServerCache> mGitServerCache;
    CommitHistoryView *mView = nullptr;
    int diffTargetRow = -1;
    int mColumnPressed = -1;
@@ -146,17 +138,6 @@ private:
     */
    void paintTagBranch(QPainter *painter, QStyleOptionViewItem opt, const QColor &currentLangeColor, int &startPoint,
                        const CommitInfo &commit) const;
-
-   /**
-    * @brief Specialized method that paints a tag in the commit message column.
-    *
-    * @param painter The painter device.
-    * @param opt The style options of the item.
-    * @param startPoint The starting X coordinate for the tag.
-    * @param pr The PullRequest status.
-    */
-   void paintPrStatus(QPainter *painter, QStyleOptionViewItem opt, int &startPoint,
-                      const GitServerPlugin::PullRequest &pr) const;
 
    /**
     * @brief getMergeColor Returns the color to be used for painting the external circle of the node. This methods

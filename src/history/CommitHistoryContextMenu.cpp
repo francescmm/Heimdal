@@ -2,7 +2,6 @@
 
 #include <BranchDlg.h>
 #include <CommitInfo.h>
-#include <ConfigData.h>
 #include <GitBase.h>
 #include <GitBranches.h>
 #include <GitCache.h>

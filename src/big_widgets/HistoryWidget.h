@@ -40,7 +40,6 @@ class FileDiffWidget;
 class FullDiffWidget;
 class BranchesWidgetMinimal;
 class QPushButton;
-class IGitServerCache;
 class QLabel;
 class GitQlientSettings;
 class QSplitter;
@@ -133,11 +132,6 @@ signals:
     \brief Signal triggered when the WIP needs to be updated.
    */
    void signalUpdateWip();
-   /**
-    * @brief showPrDetailedView Signal that makes the view change to the Pull Request detailed view
-    * @param pr The pull request number to show.
-    */
-   void showPrDetailedView(int pr);
 
    /**
     * @brief panelsVisibilityChanged Signal triggered whenever the visibility of the panels in the BranchesWidget
@@ -160,8 +154,6 @@ public:
 
    */
    ~HistoryWidget();
-
-   void enableGitServerFeatures(const QSharedPointer<IGitServerCache> &gitServerCache);
 
    /*!
     \brief Clears all the information in the subwidgets.
@@ -236,7 +228,6 @@ private:
 
    QSharedPointer<GitBase> mGit;
    QSharedPointer<GitCache> mCache;
-   QSharedPointer<IGitServerCache> mGitServerCache;
    QSharedPointer<GitQlientSettings> mSettings;
    CommitHistoryModel *mRepositoryModel = nullptr;
    CommitHistoryView *mRepositoryView = nullptr;

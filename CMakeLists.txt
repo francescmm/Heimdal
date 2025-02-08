@@ -91,24 +91,15 @@ file(GLOB SRC_FILES
    ${PROJECT_SOURCE_DIR}/src/git/*.cpp
    ${PROJECT_SOURCE_DIR}/src/git/*.h
    ${PROJECT_SOURCE_DIR}/src/git/*.ui
-   ${PROJECT_SOURCE_DIR}/src/git_server/*.cpp
-   ${PROJECT_SOURCE_DIR}/src/git_server/*.h
-   ${PROJECT_SOURCE_DIR}/src/git_server/*.ui
    ${PROJECT_SOURCE_DIR}/src/history/*.cpp
    ${PROJECT_SOURCE_DIR}/src/history/*.h
    ${PROJECT_SOURCE_DIR}/src/history/*.ui
-   ${PROJECT_SOURCE_DIR}/src/jenkins/*.cpp
-   ${PROJECT_SOURCE_DIR}/src/jenkins/*.h
-   ${PROJECT_SOURCE_DIR}/src/jenkins/*.ui
    ${PROJECT_SOURCE_DIR}/src/QLogger/*.cpp
    ${PROJECT_SOURCE_DIR}/src/QLogger/*.h
    ${PROJECT_SOURCE_DIR}/src/QLogger/*.ui
    ${PROJECT_SOURCE_DIR}/src/QPinnableTabWidget/*.cpp
    ${PROJECT_SOURCE_DIR}/src/QPinnableTabWidget/*.h
    ${PROJECT_SOURCE_DIR}/src/QPinnableTabWidget/*.ui
-   ${PROJECT_SOURCE_DIR}/src/terminal/*.cpp
-   ${PROJECT_SOURCE_DIR}/src/terminal/*.h
-   ${PROJECT_SOURCE_DIR}/src/terminal/*.ui
 )
 
 qt_add_executable(
@@ -128,12 +119,9 @@ target_include_directories(
    ${PROJECT_SOURCE_DIR}/src/config
    ${PROJECT_SOURCE_DIR}/src/diff
    ${PROJECT_SOURCE_DIR}/src/git
-   ${PROJECT_SOURCE_DIR}/src/git_server
    ${PROJECT_SOURCE_DIR}/src/history
-   ${PROJECT_SOURCE_DIR}/src/jenkins
    ${PROJECT_SOURCE_DIR}/src/QLogger
    ${PROJECT_SOURCE_DIR}/src/QPinnableTabWidget
-   ${PROJECT_SOURCE_DIR}/src/terminal
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")

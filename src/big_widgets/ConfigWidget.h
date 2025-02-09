@@ -46,8 +46,6 @@ private:
    FileEditor *mLocalGit = nullptr;
    FileEditor *mGlobalGit = nullptr;
    QButtonGroup *mDownloadButtons = nullptr;
-   QVector<QWidget *> mPluginWidgets;
-   QStringList mPluginNames;
    QPushButton *mPbFeaturesTour;
 
    void clearCache();

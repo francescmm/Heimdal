@@ -104,8 +104,6 @@ signals:
     */
    void goConfig();
 
-   void goPlugins();
-
 public:
    /*!
     \brief Default constructor.

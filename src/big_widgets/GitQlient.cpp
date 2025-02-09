@@ -20,7 +20,6 @@
 #include <QLibrary>
 #include <QMenu>
 #include <QMessageBox>
-#include <QPluginLoader>
 #include <QProcess>
 #include <QPushButton>
 #include <QStackedLayout>

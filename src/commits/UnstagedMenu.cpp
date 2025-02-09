@@ -21,14 +21,6 @@ UnstagedMenu::UnstagedMenu(const QSharedPointer<GitBase> &git, const QString &fi
 
    connect(addAction(tr("See changes")), &QAction::triggered, this, [this]() { emit signalShowDiff(mFileName); });
    connect(addAction(tr("Blame")), &QAction::triggered, this, [this]() { emit signalShowFileHistory(mFileName); });
-
-#ifndef GitQlientPlugin
-   const auto externalEditor = GitQlientSettings().globalValue("ExternalEditor", QString()).toString();
-
-   if (!externalEditor.isEmpty())
-      connect(addAction(tr("Open with external editor")), &QAction::triggered, this, &UnstagedMenu::openExternalEditor);
-#endif
-
    connect(addAction(tr("Open containing folder")), &QAction::triggered, this, &UnstagedMenu::openFileExplorer);
 
    addSeparator();
@@ -192,31 +184,6 @@ void UnstagedMenu::openFileExplorer()
    {
       QMessageBox::critical(parentWidget(), tr("Error opening file explorer"),
                             tr("There was a problem opening the file explorer."));
-   }
-}
-
-void UnstagedMenu::openExternalEditor()
-{
-   const auto fileExplorer = GitQlientSettings().globalValue("ExternalEditor", "").toString();
-
-   if (!fileExplorer.isEmpty())
-   {
-      const auto absoluteFilePath = QString("%1/%2").arg(mGit->getWorkingDir(), mFileName);
-      auto arguments = fileExplorer.split(" ");
-      arguments.append(absoluteFilePath);
-      const auto app = arguments.takeFirst();
-
-      QProcess p;
-      p.setEnvironment(QProcess::systemEnvironment());
-
-      const auto ret = p.startDetached(app, arguments);
-
-      if (!ret)
-      {
-         QMessageBox::critical(
-             parentWidget(), tr("Error opening file editor"),
-             tr("There was a problem opening the file editor, please review the value set in GitQlient config."));
-      }
    }
 }
 

@@ -9,7 +9,6 @@
 #include <GitCredentials.h>
 #include <GitQlientSettings.h>
 #include <NewVersionInfoDlg.h>
-#include <PluginsDownloader.h>
 #include <QLogger.h>
 
 #include <QApplication>
@@ -57,13 +56,9 @@ ConfigWidget::ConfigWidget(const QSharedPointer<GitBase> &git, QWidget *parent)
    , mGit(git)
    , mFeedbackTimer(new QTimer(this))
    , mSave(new QPushButton(this))
-   , mPluginsDownloader(new PluginsDownloader(this))
    , mDownloadButtons(new QButtonGroup(this))
 {
    ui->setupUi(this);
-
-   ui->lePluginsDestination->setText(QSettings().value("PluginsFolder", QString()).toString());
-   ui->lPluginsWarning->setVisible(ui->lePluginsDestination->text().isEmpty());
 
    ui->lTerminalColorScheme->setVisible(false);
    ui->cbTerminalColorScheme->setVisible(false);
@@ -180,9 +175,6 @@ ConfigWidget::ConfigWidget(const QSharedPointer<GitBase> &git, QWidget *parent)
            &ConfigWidget::onCredentialsOptionChanged);
    connect(ui->pbAddCredentials, &QPushButton::clicked, this, &ConfigWidget::showCredentialsDlg);
 
-   // TODO: Download the plugins info
-   connect(ui->pbPluginsFolder, &QPushButton::clicked, this, &ConfigWidget::selectPluginsFolder);
-
    // Connects for automatic save
    connect(ui->chDevMode, &CheckBox::stateChanged, this, &ConfigWidget::enableWidgets);
    connect(ui->chDisableLogs, &CheckBox::stateChanged, this, &ConfigWidget::saveConfig);
@@ -214,8 +206,6 @@ ConfigWidget::ConfigWidget(const QSharedPointer<GitBase> &git, QWidget *parent)
    connect(ui->leEditor, &QLineEdit::editingFinished, this, &ConfigWidget::saveConfig);
    connect(ui->pbSelectEditor, &QPushButton::clicked, this, &ConfigWidget::selectEditor);
    connect(ui->leExtFileExplorer, &QLineEdit::editingFinished, this, &ConfigWidget::saveConfig);
-   connect(mPluginsDownloader, &PluginsDownloader::availablePlugins, this, &ConfigWidget::onPluginsInfoReceived);
-   connect(mPluginsDownloader, &PluginsDownloader::pluginStored, this, &ConfigWidget::onPluginStored);
    connect(ui->pbFeaturesTour, &QPushButton::clicked, this, &ConfigWidget::showFeaturesTour);
    connect(ui->chSingleClickDiffView, &CheckBox::stateChanged, this, &ConfigWidget::saveConfig);
    connect(ui->cbDiffView, SIGNAL(currentIndexChanged(int)), this, SLOT(saveConfig()));
@@ -231,8 +221,6 @@ ConfigWidget::ConfigWidget(const QSharedPointer<GitBase> &git, QWidget *parent)
 
    size = calculateDirSize(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
    ui->lCacheSize->setText(QString("%1 KB").arg(size));
-
-   mPluginsDownloader->checkAvailablePlugins();
 }
 
 ConfigWidget::~ConfigWidget()
@@ -276,41 +264,6 @@ void ConfigWidget::onPullStrategyChanged(int index)
          gitConfig->setLocalData("pull.ff", "only");
          break;
    }
-}
-
-void ConfigWidget::onPluginsInfoReceived(const QVector<PluginInfo> &pluginsInfo)
-{
-   mPluginsInfo = pluginsInfo;
-
-   auto row = 0;
-   for (const auto &plugin : std::as_const(mPluginsInfo))
-   {
-      ui->availablePluginsLayout->addWidget(new QLabel(plugin.name), ++row, 0);
-      ui->availablePluginsLayout->addWidget(new QLabel(plugin.version), row, 1);
-
-      const auto pbDownload = new QPushButton("Download");
-      connect(pbDownload, &QPushButton::clicked, this, [url = plugin.url, dependencies = plugin.dependencies, this]() {
-         if (!dependencies.empty())
-         {
-            QMessageBox::information(
-                this, tr("Dependencies needed!"),
-                tr("This plugin needs some dependencies to work. Please make sure you have them installed:<br><br>%1")
-                    .arg(dependencies.join("<br>")));
-         }
-
-         mPluginsDownloader->downloadPlugin(url);
-      });
-      mDownloadButtons->addButton(pbDownload);
-
-      pbDownload->setDisabled(mPluginNames.contains(plugin.name) || ui->lePluginsDestination->text().isEmpty());
-
-      ui->availablePluginsLayout->addWidget(pbDownload, row, 2);
-   }
-}
-
-void ConfigWidget::onPluginStored()
-{
-   QMessageBox::information(this, tr("Reset needed"), tr("You need to restart GitQlient to load the plugins."));
 }
 
 void ConfigWidget::clearCache()
@@ -518,28 +471,6 @@ void ConfigWidget::selectFolder()
    }
 }
 
-void ConfigWidget::selectPluginsFolder()
-{
-   const QString dirName(
-       QFileDialog::getExistingDirectory(this, "Choose the directory for the GitQlient plugins", QDir::currentPath()));
-
-   if (!dirName.isEmpty() && dirName != QDir::currentPath().append("logs"))
-   {
-      QDir d(dirName);
-
-      ui->lePluginsDestination->setText(d.absolutePath());
-      ui->availablePluginsWidget->setEnabled(true);
-
-      ui->lPluginsWarning->setVisible(false);
-
-      const auto buttons = mDownloadButtons->buttons();
-      for (const auto &button : buttons)
-         button->setEnabled(true);
-
-      QSettings().setValue("PluginsFolder", d.absolutePath());
-   }
-}
-
 void ConfigWidget::selectEditor()
 {
    const QString dirName(
@@ -579,8 +510,6 @@ void ConfigWidget::useDefaultLogsFolder()
       }
    }
 }
-
-void ConfigWidget::readRemotePluginsInfo() { }
 
 void ConfigWidget::showFeaturesTour()
 {

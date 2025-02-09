@@ -4,8 +4,6 @@
 #include <QMap>
 #include <QWidget>
 
-#include <PluginsDownloader.h>
-
 class GitBase;
 class QTimer;
 class FileEditor;
@@ -47,11 +45,8 @@ private:
    QPushButton *mSave = nullptr;
    FileEditor *mLocalGit = nullptr;
    FileEditor *mGlobalGit = nullptr;
-   PluginsDownloader *mPluginsDownloader = nullptr;
    QButtonGroup *mDownloadButtons = nullptr;
    QVector<QWidget *> mPluginWidgets;
-   QVector<PluginInfo> mPluginsInfo;
-   QMap<QPushButton *, PluginInfo> mPluginDataMap;
    QStringList mPluginNames;
    QPushButton *mPbFeaturesTour;
 
@@ -64,10 +59,8 @@ private:
    void saveFile();
    void showCredentialsDlg();
    void selectFolder();
-   void selectPluginsFolder();
    void selectEditor();
    void useDefaultLogsFolder();
-   void readRemotePluginsInfo();
    void showFeaturesTour();
    void fillLanguageBox() const;
 
@@ -75,6 +68,4 @@ private slots:
    void saveConfig();
    void onCredentialsOptionChanged(QAbstractButton *button);
    void onPullStrategyChanged(int index);
-   void onPluginsInfoReceived(const QVector<PluginInfo> &pluginsInfo);
-   void onPluginStored();
 };

@@ -22,7 +22,6 @@ HEADERS += \
     $$PWD/HunkWidget.h \
     $$PWD/InitialRepoConfig.h \
     $$PWD/InputShaDlg.h \
-    $$PWD/PluginsDownloader.h \
     $$PWD/PomodoroButton.h \
     $$PWD/PomodoroConfigDlg.h \
     $$PWD/ProgressDlg.h \
@@ -43,7 +42,6 @@ SOURCES += \
     $$PWD/HunkWidget.cpp \
     $$PWD/InitialRepoConfig.cpp \
     $$PWD/InputShaDlg.cpp \
-    $$PWD/PluginsDownloader.cpp \
     $$PWD/PomodoroButton.cpp \
     $$PWD/PomodoroConfigDlg.cpp \
     $$PWD/ProgressDlg.cpp \
